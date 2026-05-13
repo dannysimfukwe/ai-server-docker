@@ -3,7 +3,7 @@
 set -e
 
 API_KEY="${API_KEY:-$(openssl rand -hex 32)}"
-MODEL_URL="${MODEL_URL:-}"
+MODEL_URL="${MODEL_URL:-https://huggingface.co/QuantFactory/Meta-Llama-3.2-1B-Instruct-GGUF/resolve/main/Meta-Llama-3.2-1B-Instruct-Q4_K_M.gguf}"
 MODEL_FILE="${MODEL_FILE:-/data/model.gguf}"
 CONTEXT_SIZE="${MAX_CONTEXT:-4096}"
 MAX_TOKENS="${MAX_TOKENS:-1024}"
@@ -31,13 +31,9 @@ echo "=============================================="
 
 mkdir -p /app /data /run/nginx /var/log/nginx
 
-if [ ! -f "$MODEL_FILE" ]; then
+if [ ! -f "$MODEL_FILE" ] || [ ! -s "$MODEL_FILE" ]; then
     echo "Downloading model..."
-    if [ -n "$MODEL_URL" ]; then
-        curl -L "$MODEL_URL" -o "$MODEL_FILE"
-    else
-        echo "No model found. Please provide MODEL_URL or pre-load model."
-    fi
+    curl -L --progress-bar "$MODEL_URL" -o "$MODEL_FILE"
 fi
 
 echo "Starting llama.cpp server..."
