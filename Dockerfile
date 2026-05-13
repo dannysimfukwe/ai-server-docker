@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y \
     wget \
     && rm -rf /var/lib/apt/lists/*
 
-RUN curl -L https://github.com/ggml-org/llama.cpp/releases/download/b9133/llama-b9133-bin-ubuntu-x64.tar.gz -o /tmp/llama.tar.gz && \
+RUN curl -L https://github.com/ggml-org/llama.cpp/releases/download/b3584/llama-b3584-bin-ubuntu-x64.tar.gz -o /tmp/llama.tar.gz && \
     tar -xzf /tmp/llama.tar.gz -C /usr/local/bin --strip-components=1 && \
     rm /tmp/llama.tar.gz && \
     chmod +x /usr/local/bin/llama-server
@@ -21,10 +21,9 @@ COPY start.sh /start.sh
 COPY index.html /app/index.html
 RUN chmod +x /start.sh
 
-RUN echo "Downloading Llama 3.2 model..." && \
-    wget -q --show-progress -O /data/model.gguf "https://huggingface.co/bartowski/Llama-3.2-1B-Instruct-GGUF/resolve/main/Llama-3.2-1B-Instruct-Q4_K_M.gguf" || \
+RUN wget -q --show-progress -O /data/model.gguf "https://huggingface.co/bartowski/Llama-3.2-1B-Instruct-GGUF/resolve/main/Llama-3.2-1B-Instruct-Q4_K_M.gguf" || \
     wget -q -O /data/model.gguf "https://huggingface.co/QuantFactory/Meta-Llama-3.2-1B-Instruct-GGUF/resolve/main/Meta-Llama-3.2-1B-Instruct-Q4_K_M.gguf" || \
-    echo "Warning: Model download failed, container may not work properly"
+    echo "Warning: Model download failed"
 
 EXPOSE 80
 
