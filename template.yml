@@ -1,0 +1,44 @@
+name: AI Server
+description: Self-hosted AI server with OpenAI-compatible API. Rate-limited, API-key authenticated.
+icon: robot
+category: ai
+github_repo: dannysimfukwe/ai-server-docker
+dockerfile: Dockerfile
+requires_ai_server: true
+environment:
+  - key: MODEL
+    label: AI Model
+    type: select
+    options:
+      - llama3.2: Llama 3.2 (3B, recommended)
+      - llama3.1: Llama 3.1 (8B)
+      - mistral: Mistral 7B
+      - phi3: Phi-3 Mini
+      - gemma2: Gemma 2 (2B)
+    default: llama3.2
+  - key: QUANTIZATION
+    label: Quantization
+    type: select
+    options:
+      - Q4_K_M: Q4 (balanced, fast)
+      - Q5_K_M: Q5 (better quality)
+      - Q8_0: Q8 (best quality)
+      - F16: F16 (full precision)
+    default: Q4_K_M
+  - key: MAX_CONTEXT
+    label: Context Size
+    type: select
+    options:
+      - "2048": 2K (fast, low memory)
+      - "4096": 4K (recommended)
+      - "8192": 8K (higher memory)
+    default: "4096"
+  - key: MAX_TOKENS
+    label: Max Response Tokens
+    type: select
+    options:
+      - "256": 256
+      - "512": 512
+      - "1024": 1024
+      - "2048": 2048
+    default: "1024"
