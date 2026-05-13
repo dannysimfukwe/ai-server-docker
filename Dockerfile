@@ -5,10 +5,11 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y \
     curl \
     nginx \
-    python3 \
     && rm -rf /var/lib/apt/lists/*
 
-RUN curl -L https://huggingface.co/ggerganov/llama.cpp/resolve/latest/llama-server-ubuntu-x86_64?download=true -o /usr/local/bin/llama-server && \
+RUN curl -L https://github.com/ggml-org/llama.cpp/releases/download/b9133/llama-b9133-bin-ubuntu-x64.tar.gz -o /tmp/llama.tar.gz && \
+    tar -xzf /tmp/llama.tar.gz -C /usr/local/bin --strip-components=1 && \
+    rm /tmp/llama.tar.gz && \
     chmod +x /usr/local/bin/llama-server
 
 RUN mkdir -p /app /data /run/nginx
@@ -16,6 +17,7 @@ RUN mkdir -p /app /data /run/nginx
 COPY nginx.conf /etc/nginx/nginx.conf
 COPY auth.lua /etc/nginx/auth.lua
 COPY start.sh /start.sh
+COPY index.html /app/index.html
 RUN chmod +x /start.sh
 
 RUN curl -L "https://huggingface.co/mattr899/llama3.2-3b-q4_k_m/resolve/main/llama3.2-3b-q4_k_m.gguf" -o /data/model.gguf 2>/dev/null || \
