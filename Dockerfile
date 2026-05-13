@@ -5,10 +5,10 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y \
     curl \
     nginx \
-    wget \
+    unzip \
     && rm -rf /var/lib/apt/lists/*
 
-RUN curl -L https://github.com/ggml-org/llama.cpp/releases/download/b3584/llama-b3584-bin-ubuntu-x64.tar.gz -o /tmp/llama.tar.gz && \
+RUN curl -L https://github.com/ggml-org/llama.cpp/releases/download/b9133/llama-b9133-bin-ubuntu-vulkan-x64.tar.gz -o /tmp/llama.tar.gz && \
     tar -xzf /tmp/llama.tar.gz -C /usr/local/bin --strip-components=1 && \
     rm /tmp/llama.tar.gz && \
     chmod +x /usr/local/bin/llama-server
