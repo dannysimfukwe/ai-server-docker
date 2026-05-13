@@ -11,6 +11,7 @@ RUN mkdir -p /app /data /run/nginx
 
 COPY nginx.conf /etc/nginx/nginx.conf
 COPY auth.lua /etc/nginx/auth.lua
+COPY start.sh /start.sh
 COPY index.html /app/index.html
 
 RUN chmod +x /start.sh
