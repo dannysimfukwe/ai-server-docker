@@ -18,10 +18,7 @@ Deploy your own AI server with an OpenAI-compatible API on [42helv.com](https://
 3. Select the **AI Server** template
 4. Configure your server and deploy
 
-Your API key will be auto-generated. Check the container logs:
-```bash
-docker logs <container_name>
-```
+Your API key will be auto-generated and shown on your deployed service page.
 
 ### 2. Connect Your App
 
