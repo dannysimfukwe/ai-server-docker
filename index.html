@@ -176,16 +176,18 @@
                 <div class="message-content">Hello! I'm your local AI assistant running on your own server. Try asking me anything!</div>
             </div>
         </div>
-        <div class="input-area">
-            <div class="input-wrapper">
-                <input type="text" id="messageInput" name="message" placeholder="Type your message..." autocomplete="off">
-                <button id="sendBtn">Send</button>
+        <form autocomplete="off">
+            <div class="input-area">
+                <div class="input-wrapper">
+                    <input type="text" id="messageInput" name="message" placeholder="Type your message..." autocomplete="off">
+                    <button id="sendBtn">Send</button>
+                </div>
             </div>
-        </div>
-        <div class="api-key-area">
-            <label for="apiKeyInput">API Key:</label>
-            <input type="password" id="apiKeyInput" name="api_key" placeholder="Enter your API key (check logs for auto-generated key)" autocomplete="off">
-        </div>
+            <div class="api-key-area">
+                <label for="apiKeyInput">API Key:</label>
+                <input type="password" id="apiKeyInput" name="api_key" placeholder="Enter your API key (check logs for auto-generated key)" autocomplete="off">
+            </div>
+        </form>
         <div class="api-help">
             API is OpenAI-compatible. Endpoint: <code id="apiEndpoint"></code> | Try: <code>POST /v1/chat/completions</code>, <code>GET /v1/models</code>
         </div>
