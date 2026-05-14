@@ -179,13 +179,13 @@
         <form autocomplete="off">
             <div class="input-area">
                 <div class="input-wrapper">
-                    <input type="text" id="messageInput" name="message" placeholder="Type your message..." autocomplete="off">
+                    <input type="text" id="messageInput" placeholder="Type your message..." autocomplete="off" spellcheck="false" autocorrect="off" autocapitalize="off">
                     <button id="sendBtn">Send</button>
                 </div>
             </div>
             <div class="api-key-area">
                 <label for="apiKeyInput">API Key:</label>
-                <input type="password" id="apiKeyInput" name="api_key" placeholder="Enter your API key (check logs for auto-generated key)" autocomplete="new-password">
+                <input type="text" id="apiKeyInput" placeholder="Enter your API key" autocomplete="off" spellcheck="false" autocorrect="off" autocapitalize="off" style="ime-mode:disabled;">
             </div>
         </form>
         <div class="api-help">
