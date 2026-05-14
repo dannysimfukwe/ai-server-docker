@@ -5,13 +5,6 @@ set -e
 API_KEY="${API_KEY:-$(openssl rand -hex 32)}"
 MODEL_NAME="${MODEL_NAME:-llama3.2:1b}"
 
-echo "=============================================="
-echo "         AI Server Configuration"
-echo "=============================================="
-echo "API Key: $API_KEY"
-echo "Model: $MODEL_NAME"
-echo "=============================================="
-
 mkdir -p /app /data /run/nginx /var/log/nginx
 
 echo "Starting Ollama..."
@@ -31,12 +24,14 @@ echo "Pulling model: $MODEL_NAME"
 ollama pull $MODEL_NAME || echo "Model may already be available"
 
 echo "Starting nginx..."
-sed -i 's/listen 80;/listen 8000;/' /etc/nginx/nginx.conf
 nginx -c /etc/nginx/nginx.conf
 
 echo ""
 echo "=============================================="
 echo "AI Server is ready!"
 echo "=============================================="
+echo ""
+echo "Find your API key at: https://${HOST:-localhost}/api-key"
+echo ""
 
 wait $OLLAMA_PID
