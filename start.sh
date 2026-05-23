@@ -2,11 +2,12 @@
 
 set -e
 
-API_KEY="${API_KEY:-auto-generated}"
 MODEL_NAME="${MODEL_NAME:-llama3.2:1b}"
 
-# Generate a real API key if still using the placeholder
-if [ "$API_KEY" = "auto-generated" ]; then
+# API_KEY precedence: USER_API_KEY (platform) > API_KEY (env) > auto-generated
+if [ -n "$USER_API_KEY" ]; then
+    API_KEY="$USER_API_KEY"
+elif [ -z "${API_KEY:-}" ] || [ "$API_KEY" = "auto-generated" ]; then
     API_KEY="$(openssl rand -hex 32)"
 fi
 
