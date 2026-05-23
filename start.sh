@@ -35,7 +35,6 @@ echo "Pulling model: $MODEL_NAME"
 ollama pull $MODEL_NAME || echo "Model may already be available"
 
 echo "Starting nginx..."
-sed -i 's/listen 80;/listen 8000;/' /etc/nginx/nginx.conf
 nginx -c /etc/nginx/nginx.conf
 
 echo ""
