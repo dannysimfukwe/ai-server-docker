@@ -45,5 +45,4 @@ environment:
   - key: API_KEY
     label: API Key
     type: string
-    default: auto-generated
-    description: Auto-generated on first deploy. Keep secret.
+    description: Auto-generated on first deploy. Copy this key and keep it secret.
