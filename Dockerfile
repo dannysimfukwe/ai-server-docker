@@ -15,6 +15,6 @@ COPY index.html /app/index.html
 
 RUN chmod +x /start.sh
 
-EXPOSE 80
+EXPOSE 8000
 
 ENTRYPOINT ["/start.sh"]
