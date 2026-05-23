@@ -3,296 +3,776 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Chat - Powered by Local LLM</title>
+    <title>AI Server — Self-Hosted LLM | 42helv</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #0a0a0f;
+            color: #e5e5e5;
+            display: flex;
+            flex-direction: column;
             min-height: 100vh;
+        }
+        .header {
             display: flex;
             align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        .chat-container {
-            width: 100%;
-            max-width: 800px;
-            background: #0f0f23;
-            border-radius: 16px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            overflow: hidden;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .chat-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 20px;
-            text-align: center;
-        }
-        .chat-header h1 { color: white; font-size: 24px; font-weight: 600; }
-        .chat-header p { color: rgba(255,255,255,0.8); font-size: 14px; margin-top: 5px; }
-        .demo-banner {
-            background: rgba(255, 193, 7, 0.15);
-            border-left: 4px solid #ffc107;
-            padding: 12px 16px;
-            font-size: 13px;
-            color: #ffc107;
-            line-height: 1.5;
-        }
-        .demo-banner strong { color: #fff; }
-        .model-info {
-            background: rgba(255,255,255,0.05);
-            padding: 10px 20px;
-            display: flex;
             justify-content: space-between;
-            align-items: center;
-            font-size: 12px;
-            color: rgba(255,255,255,0.7);
+            padding: 16px 24px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            background: #0d0d12;
         }
-        .status { display: flex; align-items: center; gap: 6px; }
+        .header-left { display: flex; align-items: center; gap: 12px; }
+        .header-logo {
+            width: 36px; height: 36px;
+            background: linear-gradient(135deg, #ea580c, #c2410c);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; font-weight: 800; color: #fff;
+        }
+        .header-title { font-size: 16px; font-weight: 600; color: #fff; }
+        .header-badge {
+            font-size: 11px; padding: 3px 10px;
+            background: rgba(234,88,12,0.12); color: #f97316;
+            border: 1px solid rgba(234,88,12,0.2);
+            border-radius: 999px; font-weight: 500;
+        }
+        .header-model {
+            display: flex; align-items: center; gap: 6px;
+            font-size: 12px; color: #6b7280;
+        }
         .status-dot {
             width: 8px; height: 8px; border-radius: 50%;
-            background: #4ade80;
+            background: #4ade80; display: inline-block;
             animation: pulse 2s infinite;
         }
         @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
-        .messages { height: 400px; overflow-y: auto; padding: 20px; }
-        .message { margin-bottom: 16px; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .message.user { text-align: right; }
-        .message-content {
-            display: inline-block;
+        .main {
+            display: flex;
+            flex: 1;
+            padding: 16px;
+            gap: 16px;
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+            min-height: 0;
+        }
+        .chat-panel {
+            flex: 1.5;
+            display: flex;
+            flex-direction: column;
+            background: #0d0d12;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.06);
+            overflow: hidden;
+            min-width: 0;
+        }
+        .chat-header-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             padding: 12px 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            background: rgba(0,0,0,0.2);
+        }
+        .chat-header-bar .dots { display: flex; gap: 6px; }
+        .chat-header-bar .dots span {
+            width: 10px; height: 10px; border-radius: 50%;
+        }
+        .chat-header-bar .dots span:nth-child(1) { background: #ef4444; }
+        .chat-header-bar .dots span:nth-child(2) { background: #eab308; }
+        .chat-header-bar .dots span:nth-child(3) { background: #22c55e; }
+        .chat-header-bar .label {
+            font-size: 11px; color: #6b7280;
+            font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+        }
+        .chat-header-bar .api-key-toggle {
+            font-size: 11px; color: #6b7280;
+            background: none; border: none; cursor: pointer;
+            display: flex; align-items: center; gap: 4px;
+            font-family: inherit;
+        }
+        .chat-header-bar .api-key-toggle:hover { color: #f97316; }
+        .api-key-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            background: rgba(0,0,0,0.15);
+        }
+        .api-key-bar label {
+            font-size: 11px; color: #6b7280;
+            white-space: nowrap;
+        }
+        .api-key-bar input {
+            flex: 1;
+            height: 30px;
+            padding: 0 10px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 6px;
+            color: #d1d5db;
+            font-size: 12px;
+            font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .api-key-bar input:focus { border-color: rgba(234,88,12,0.4); }
+        .api-key-bar input::placeholder { color: #4b5563; }
+        .api-key-bar .key-ok {
+            font-size: 11px; color: #4ade80;
+            display: none;
+        }
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .message {
+            display: flex;
+            animation: fadeIn 0.25s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .message.user { justify-content: flex-end; }
+        .message.assistant { justify-content: flex-start; }
+        .message-bubble {
+            max-width: 85%;
+            padding: 10px 16px;
             border-radius: 16px;
-            max-width: 80%;
-            line-height: 1.5;
+            font-size: 14px;
+            line-height: 1.6;
             white-space: pre-wrap;
             word-break: break-word;
         }
-        .message.assistant .message-content {
-            background: rgba(102,126,234,0.2);
-            color: #e0e0e0;
-            border-bottom-left-radius: 4px;
-        }
-        .message.user .message-content {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+        .message.user .message-bubble {
+            background: rgba(234,88,12,0.12);
+            border: 1px solid rgba(234,88,12,0.2);
+            color: #fed7aa;
             border-bottom-right-radius: 4px;
         }
+        .message.assistant .message-bubble {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.06);
+            color: #d1d5db;
+            border-bottom-left-radius: 4px;
+        }
         .typing-indicator {
-            display: flex; gap: 4px; padding: 12px 16px;
-            background: rgba(102,126,234,0.2); border-radius: 16px; width: fit-content;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 14px 20px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 16px;
+            width: fit-content;
+            border-bottom-left-radius: 4px;
         }
         .typing-indicator span {
-            width: 8px; height: 8px; background: rgba(255,255,255,0.5);
-            border-radius: 50%; animation: typing 1.4s infinite;
+            width: 7px; height: 7px;
+            background: rgba(249,115,22,0.5);
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
         }
         .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
         .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
         @keyframes typing { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
         .input-area {
-            padding: 20px;
-            background: rgba(255,255,255,0.03);
-            border-top: 1px solid rgba(255,255,255,0.1);
+            padding: 12px 16px;
+            border-top: 1px solid rgba(255,255,255,0.06);
+            background: rgba(0,0,0,0.2);
         }
-        .input-wrapper { display: flex; gap: 12px; }
-        #messageInput {
-            flex: 1; padding: 14px 20px;
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 12px;
-            background: rgba(255,255,255,0.05);
-            color: white; font-size: 16px; outline: none;
+        .input-row { display: flex; gap: 8px; }
+        .input-row input {
+            flex: 1;
+            height: 42px;
+            padding: 0 16px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            color: #e5e5e5;
+            font-size: 14px;
+            outline: none;
             transition: border-color 0.2s;
         }
-        #messageInput:focus { border-color: rgba(102,126,234,0.5); }
-        #messageInput::placeholder { color: rgba(255,255,255,0.4); }
-        #sendBtn {
-            padding: 14px 28px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white; border: none; border-radius: 12px;
-            font-size: 16px; font-weight: 600; cursor: pointer;
-            transition: transform 0.2s, opacity 0.2s;
+        .input-row input:focus { border-color: rgba(234,88,12,0.4); }
+        .input-row input::placeholder { color: #4b5563; }
+        .input-row input:disabled { opacity: 0.4; }
+        .input-row button {
+            width: 42px; height: 42px;
+            background: rgba(234,88,12,0.8);
+            border: none; border-radius: 10px;
+            color: #fff;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.2s, opacity 0.2s;
+            flex-shrink: 0;
         }
-        #sendBtn:hover { transform: scale(1.05); }
-        #sendBtn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-        .error {
-            background: rgba(239,68,68,0.2);
-            border: 1px solid rgba(239,68,68,0.3);
-            color: #fca5a5; padding: 12px; border-radius: 8px; margin: 16px 20px; font-size: 14px;
+        .input-row button:hover { background: #ea580c; }
+        .input-row button:disabled { opacity: 0.3; cursor: default; }
+        .input-row button svg { width: 18px; height: 18px; }
+        .error-bar {
+            padding: 10px 16px;
+            background: rgba(239,68,68,0.12);
+            border-bottom: 1px solid rgba(239,68,68,0.15);
+            font-size: 13px;
+            color: #fca5a5;
+            display: none;
         }
-        .api-key-area {
-            padding: 12px 20px;
-            background: rgba(255,255,255,0.03);
-            border-top: 1px solid rgba(255,255,255,0.05);
+        .docs-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            overflow-y: auto;
+            min-width: 0;
+        }
+        .docs-card {
+            background: #0d0d12;
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 12px;
+            padding: 16px;
+        }
+        .docs-card h3 {
+            font-size: 13px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 10px;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 6px;
         }
-        .api-key-area label {
+        .docs-card h3 .icon { color: #f97316; }
+        .docs-card p, .docs-card li {
             font-size: 13px;
-            color: rgba(255,255,255,0.7);
+            line-height: 1.6;
+            color: #9ca3af;
         }
-        #apiKeyInput {
-            flex: 1;
-            padding: 10px 14px;
-            border: 1px solid rgba(255,255,255,0.1);
+        .docs-card code {
+            font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+            font-size: 12px;
+            color: #f97316;
+        }
+        .docs-card .code-block {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.06);
             border-radius: 8px;
-            background: rgba(255,255,255,0.05);
-            color: white;
-            font-size: 14px;
-            font-family: monospace;
+            overflow: hidden;
+            position: relative;
         }
-        #apiKeyInput:focus { border-color: rgba(102,126,234,0.5); outline: none; }
-        #apiKeyInput::placeholder { color: rgba(255,255,255,0.4); }
-        .api-help {
+        .docs-card .code-block .code-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: rgba(0,0,0,0.2);
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+        .docs-card .code-block .code-header .lang {
             font-size: 11px;
-            color: rgba(255,255,255,0.5);
-            padding: 8px 20px;
-            background: rgba(255,255,255,0.02);
+            font-weight: 500;
         }
-        ::-webkit-scrollbar { width: 8px; }
+        .docs-card .code-block .code-header .copy-btn {
+            background: none; border: none;
+            color: #6b7280; cursor: pointer;
+            font-size: 11px;
+            display: flex; align-items: center; gap: 4px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: inherit;
+        }
+        .docs-card .code-block .code-header .copy-btn:hover { color: #d1d5db; background: rgba(255,255,255,0.05); }
+        .docs-card .code-block pre {
+            padding: 12px;
+            font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+            color: #9ca3af;
+            overflow-x: auto;
+            white-space: pre;
+        }
+        .lang-tabs {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+        .lang-tabs button {
+            padding: 5px 12px;
+            font-size: 12px;
+            font-weight: 500;
+            background: none; border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            color: #6b7280;
+            font-family: inherit;
+            transition: all 0.15s;
+        }
+        .lang-tabs button:hover { color: #d1d5db; background: rgba(255,255,255,0.04); }
+        .lang-tabs button.active {
+            color: #f97316;
+            background: rgba(234,88,12,0.1);
+            box-shadow: 0 0 0 1px rgba(234,88,12,0.15);
+        }
+        .clone-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 12px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 8px;
+            font-size: 12px;
+            font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+            color: #6b7280;
+        }
+        .clone-row .cmd { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .clone-row .copy-btn {
+            background: none; border: none;
+            color: #6b7280; cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            display: flex;
+            flex-shrink: 0;
+        }
+        .clone-row .copy-btn:hover { color: #d1d5db; background: rgba(255,255,255,0.05); }
+        .btn-row {
+            display: flex;
+            gap: 8px;
+        }
+        .btn-row a {
+            flex: 1;
+            padding: 8px 12px;
+            font-size: 12px;
+            font-weight: 500;
+            border-radius: 8px;
+            text-align: center;
+            text-decoration: none;
+            transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+        .btn-row .btn-outline {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            color: #9ca3af;
+        }
+        .btn-row .btn-outline:hover { color: #e5e5e5; background: rgba(255,255,255,0.08); }
+        .btn-row .btn-primary {
+            background: rgba(234,88,12,0.15);
+            border: 1px solid rgba(234,88,12,0.2);
+            color: #f97316;
+        }
+        .btn-row .btn-primary:hover { background: rgba(234,88,12,0.2); }
+        .env-list { display: flex; flex-direction: column; gap: 6px; }
+        .env-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.04);
+            border-radius: 6px;
+        }
+        .env-item .key {
+            font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+            font-size: 12px;
+            color: #f97316;
+        }
+        .env-item .val {
+            font-size: 11px;
+            color: #6b7280;
+        }
+        .env-item .default {
+            font-size: 10px;
+            padding: 2px 6px;
+            background: rgba(255,255,255,0.04);
+            border-radius: 4px;
+            color: #4b5563;
+        }
+        .endpoint-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            background: rgba(234,88,12,0.04);
+            border: 1px solid rgba(234,88,12,0.12);
+            border-radius: 8px;
+            font-size: 12px;
+            font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+        }
+        .endpoint-row .url { color: #f97316; }
+        .endpoint-row .badge-endpoint {
+            font-size: 10px;
+            padding: 2px 8px;
+            background: rgba(234,88,12,0.12);
+            border-radius: 4px;
+            color: #f97316;
+        }
+        ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.12); }
+        .footer {
+            text-align: center;
+            padding: 12px 24px;
+            border-top: 1px solid rgba(255,255,255,0.04);
+            font-size: 11px;
+            color: #4b5563;
+        }
+        .footer a { color: #6b7280; text-decoration: none; }
+        .footer a:hover { color: #f97316; }
+        @media (max-width: 900px) {
+            .main { flex-direction: column; }
+            .chat-panel { flex: none; height: 60vh; }
+            .docs-panel { flex: none; }
+        }
     </style>
 </head>
 <body>
-    <div class="chat-container">
-        <div class="chat-header">
-            <h1>🤖 Local AI Chat</h1>
-            <p>Powered by your own AI Server</p>
+    <header class="header">
+        <div class="header-left">
+            <div class="header-logo">4</div>
+            <span class="header-title">AI Server</span>
+            <span class="header-badge">OpenAI-Compatible</span>
         </div>
-        <div class="demo-banner">
-            <strong>Demo:</strong> This is a demonstration of a self-hosted AI server deployed on <strong>42helv.com</strong>.<br>
-            This server exposes an OpenAI-compatible API. Clone the repo, deploy your own, and connect your apps!
+        <div class="header-model">
+            <span class="status-dot"></span>
+            <span id="modelName">Model: Loading...</span>
         </div>
-        <div class="model-info">
-            <div class="status"><span class="status-dot"></span><span>Connected to local LLM</span></div>
-            <div id="modelName">Model: Loading...</div>
-        </div>
-        <div id="errorContainer"></div>
-        <div class="messages" id="messages">
-            <div class="message assistant">
-                <div class="message-content">Hello! I'm your local AI assistant running on your own server. Try asking me anything!</div>
+    </header>
+
+    <div class="main">
+        <div class="chat-panel">
+            <div class="chat-header-bar">
+                <div class="dots"><span></span><span></span><span></span></div>
+                <span class="label">AI Playground</span>
+                <button class="api-key-toggle" id="apiKeyToggle" onclick="toggleApiKey()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+                    API Key
+                </button>
             </div>
-        </div>
-        <form autocomplete="off">
-            <div class="input-area">
-                <div class="input-wrapper">
-                    <input type="text" id="messageInput" placeholder="Type your message..." autocomplete="off" spellcheck="false" autocorrect="off" autocapitalize="off">
-                    <button id="sendBtn">Send</button>
+            <div class="api-key-bar" id="apiKeyBar">
+                <label>API Key:</label>
+                <input type="text" id="apiKeyInput" placeholder="Enter your API key" autocomplete="off" spellcheck="false">
+                <span class="key-ok" id="keyOk">&#10003; Saved</span>
+            </div>
+            <div class="error-bar" id="errorBar"></div>
+            <div class="messages" id="messages">
+                <div class="message assistant">
+                    <div class="message-bubble">Hello! I'm your AI assistant running on your own server. Try asking me anything!</div>
                 </div>
             </div>
-            <div class="api-key-area">
-                <label for="apiKeyInput">API Key:</label>
-                <input type="text" id="apiKeyInput" placeholder="Enter your API key" autocomplete="off" spellcheck="false" autocorrect="off" autocapitalize="off" style="ime-mode:disabled;">
+            <div class="input-area">
+                <div class="input-row">
+                    <input type="text" id="messageInput" placeholder="Type a message..." autocomplete="off" spellcheck="false">
+                    <button id="sendBtn" onclick="sendMessage()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+                    </button>
+                </div>
             </div>
-        </form>
-        <div class="api-help">
-            API is OpenAI-compatible. Endpoint: <code id="apiEndpoint"></code> | Try: <code>POST /v1/chat/completions</code>, <code>GET /v1/models</code>
+        </div>
+
+        <div class="docs-panel">
+            <div class="docs-card">
+                <h3><span class="icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                </span>API Endpoint</h3>
+                <div class="endpoint-row">
+                    <span class="badge-endpoint">POST</span>
+                    <span class="url" id="apiEndpoint">/v1/chat/completions</span>
+                </div>
+            </div>
+
+            <div class="docs-card">
+                <h3><span class="icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                </span>Quick Start</h3>
+                <p>Use any OpenAI SDK — just change the <code>base_url</code> and <code>api_key</code> to point to your AI server. The API is fully compatible with the OpenAI format.</p>
+            </div>
+
+            <div class="docs-card">
+                <h3><span class="icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                </span>Code Examples</h3>
+                <div class="lang-tabs" id="langTabs">
+                    <button class="active" data-lang="python">Python</button>
+                    <button data-lang="javascript">JavaScript</button>
+                    <button data-lang="curl">cURL</button>
+                </div>
+                <div class="code-block" style="margin-top:8px">
+                    <div class="code-header">
+                        <span class="lang" id="codeLangLabel">Python</span>
+                        <button class="copy-btn" id="copyCodeBtn">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                            Copy
+                        </button>
+                    </div>
+                    <pre id="codeBlock">from openai import OpenAI
+
+client = OpenAI(
+    base_url="http://localhost:11434/v1",
+    api_key="your-api-key"
+)
+
+response = client.chat.completions.create(
+    model="llama3.2",
+    messages=[
+        {"role": "user", "content": "Hello!"}
+    ]
+)
+
+print(response.choices[0].message.content)</pre>
+                </div>
+            </div>
+
+            <div class="docs-card">
+                <h3><span class="icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+                </span>Clone &amp; Develop Locally</h3>
+                <p style="margin-bottom:10px">Fork or clone the repository to customize your AI server.</p>
+                <div class="clone-row">
+                    <span class="cmd">git clone https://github.com/dannysimfukwe/ai-server-docker.git</span>
+                    <button class="copy-btn" id="cloneCopyBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                    </button>
+                </div>
+                <div class="btn-row">
+                    <a href="https://github.com/dannysimfukwe/ai-server-docker" target="_blank" rel="noopener" class="btn-outline">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                        View on GitHub
+                    </a>
+                    <a href="https://github.com/dannysimfukwe/ai-server-docker/fork" target="_blank" rel="noopener" class="btn-primary">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        Fork Repository
+                    </a>
+                </div>
+            </div>
+
+            <div class="docs-card" id="envCard">
+                <h3><span class="icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                </span>Environment Variables</h3>
+                <div class="env-list">
+                    <div class="env-item">
+                        <span class="key">MODEL</span>
+                        <span class="default">llama3.2</span>
+                    </div>
+                    <div class="env-item">
+                        <span class="key">API_KEY</span>
+                        <span class="val">Auto-generated on deploy</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="docs-card">
+                <h3><span class="icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                </span>Deploy on 42helv</h3>
+                <p style="margin-bottom:10px">One-click deploy your AI server with your preferred model and configuration.</p>
+                <a href="https://42helv.com/ai-assistants" target="_blank" rel="noopener" style="display:block;text-align:center;padding:10px;border-radius:8px;text-decoration:none;font-size:13px;font-weight:500;background:rgba(234,88,12,0.15);border:1px solid rgba(234,88,12,0.2);color:#f97316;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;margin-right:4px;vertical-align:middle"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                    Deploy on 42helv
+                </a>
+            </div>
         </div>
     </div>
+
+    <div class="footer">
+        <a href="https://42helv.com" target="_blank" rel="noopener">42helv</a> &mdash; Deploy Web Apps in Minutes
+    </div>
+
     <script>
-        const API_BASE = window.location.origin;
-        const messagesContainer = document.getElementById('messages');
-        const messageInput = document.getElementById('messageInput');
-        const sendBtn = document.getElementById('sendBtn');
-        const errorContainer = document.getElementById('errorContainer');
-        const modelNameEl = document.getElementById('modelName');
-        const apiKeyInput = document.getElementById('apiKeyInput');
-        const apiEndpointEl = document.getElementById('apiEndpoint');
+        var API_BASE = window.location.origin;
+        var messages = [];
+        var isLoading = false;
+
+        var messagesEl = document.getElementById('messages');
+        var inputEl = document.getElementById('messageInput');
+        var sendBtn = document.getElementById('sendBtn');
+        var errorBar = document.getElementById('errorBar');
+        var modelNameEl = document.getElementById('modelName');
+        var apiKeyInput = document.getElementById('apiKeyInput');
+        var apiEndpointEl = document.getElementById('apiEndpoint');
+        var keyOk = document.getElementById('keyOk');
 
         apiEndpointEl.textContent = API_BASE + '/v1/chat/completions';
 
-        let messages = [];
-        let isLoading = false;
-
-        function getApiKey() {
-            return localStorage.getItem('ai_api_key') || apiKeyInput.value;
-        }
-
-        function setApiKey(key) {
-            if (key) {
-                localStorage.setItem('ai_api_key', key);
-            }
-        }
-
-        apiKeyInput.addEventListener('change', (e) => {
-            setApiKey(e.target.value);
-        });
-
         if (localStorage.getItem('ai_api_key')) {
             apiKeyInput.value = localStorage.getItem('ai_api_key');
+            keyOk.style.display = 'inline';
+        }
+        apiKeyInput.addEventListener('input', function() {
+            var key = apiKeyInput.value.trim();
+            if (key) {
+                localStorage.setItem('ai_api_key', key);
+                keyOk.style.display = 'inline';
+            } else {
+                localStorage.removeItem('ai_api_key');
+                keyOk.style.display = 'none';
+            }
+        });
+
+        function getApiKey() {
+            return apiKeyInput.value.trim() || localStorage.getItem('ai_api_key') || '';
         }
 
-        async function sendMessage() {
-            const content = messageInput.value.trim();
+        function toggleApiKey() {
+            var bar = document.getElementById('apiKeyBar');
+            bar.style.display = bar.style.display === 'none' ? 'flex' : 'none';
+        }
+
+        function showError(msg) {
+            errorBar.textContent = '\u26A0\uFE0F ' + msg;
+            errorBar.style.display = 'block';
+            setTimeout(function() { errorBar.style.display = 'none'; }, 5000);
+        }
+
+        function escapeHtml(text) {
+            var d = document.createElement('div');
+            d.textContent = text;
+            return d.innerHTML;
+        }
+
+        function renderMessages() {
+            var html = '';
+            for (var i = 0; i < messages.length; i++) {
+                var m = messages[i];
+                html += '<div class="message ' + m.role + '"><div class="message-bubble">' + escapeHtml(m.content) + '</div></div>';
+            }
+            messagesEl.innerHTML = html;
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+        }
+
+        function sendMessage() {
+            var content = inputEl.value.trim();
             if (!content || isLoading) return;
 
-            const apiKey = getApiKey();
+            var apiKey = getApiKey();
             if (!apiKey) {
                 showError('Please enter your API key above');
                 apiKeyInput.focus();
                 return;
             }
 
-            messages.push({ role: 'user', content });
+            messages.push({ role: 'user', content: content });
             renderMessages();
-            messageInput.value = '';
+            inputEl.value = '';
             isLoading = true;
             sendBtn.disabled = true;
 
-            const typingHtml = '<div class="message assistant" id="typing"><div class="typing-indicator"><span></span><span></span><span></span></div></div>';
-            messagesContainer.insertAdjacentHTML('beforeend', typingHtml);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            var typingHtml = '<div class="message assistant" id="typing"><div class="typing-indicator"><span></span><span></span><span></span></div></div>';
+            messagesEl.insertAdjacentHTML('beforeend', typingHtml);
+            messagesEl.scrollTop = messagesEl.scrollHeight;
 
-            try {
-                const response = await fetch(`${API_BASE}/v1/chat/completions`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-                    body: JSON.stringify({ model: 'llama3.2:1b', messages, stream: false })
-                });
-
+            fetch(API_BASE + '/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + apiKey
+                },
+                body: JSON.stringify({
+                    model: 'llama3.2:1b',
+                    messages: messages,
+                    stream: false
+                })
+            })
+            .then(function(response) {
                 document.getElementById('typing')?.remove();
-
                 if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.error?.message || 'Request failed');
+                    return response.json().then(function(err) {
+                        throw new Error(err.error?.message || 'Request failed (' + response.status + ')');
+                    });
                 }
-
-                const data = await response.json();
-                const assistantMessage = data.choices[0]?.message?.content || 'No response received.';
-                messages.push({ role: 'assistant', content: assistantMessage });
+                return response.json();
+            })
+            .then(function(data) {
+                var content = data.choices?.[0]?.message?.content || 'No response received.';
+                messages.push({ role: 'assistant', content: content });
                 renderMessages();
-            } catch (error) {
+            })
+            .catch(function(error) {
                 document.getElementById('typing')?.remove();
                 showError(error.message);
-            } finally {
+            })
+            .finally(function() {
                 isLoading = false;
                 sendBtn.disabled = false;
-                messageInput.focus();
+                inputEl.focus();
+            });
+        }
+
+        inputEl.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
             }
+        });
+
+        var codeSnippets = {
+            python: {
+                label: 'Python',
+                code: 'from openai import OpenAI\n\nclient = OpenAI(\n    base_url="' + API_BASE + '/v1",\n    api_key="your-api-key"\n)\n\nresponse = client.chat.completions.create(\n    model="llama3.2",\n    messages=[\n        {"role": "user", "content": "Hello!"}\n    ]\n)\n\nprint(response.choices[0].message.content)'
+            },
+            javascript: {
+                label: 'JavaScript',
+                code: 'import OpenAI from \'openai\';\n\nconst client = new OpenAI({\n  baseURL: \'' + API_BASE + '/v1\',\n  apiKey: \'your-api-key\'\n});\n\nconst response = await client.chat.completions.create({\n  model: \'llama3.2\',\n  messages: [\n    { role: \'user\', content: \'Hello!\' }\n  ]\n});\n\nconsole.log(response.choices[0].message.content);'
+            },
+            curl: {
+                label: 'cURL',
+                code: 'curl ' + API_BASE + '/v1/chat/completions \\\n  -H "Authorization: Bearer your-api-key" \\\n  -H "Content-Type: application/json" \\\n  -d \'{\n    "model": "llama3.2",\n    "messages": [\n      {"role": "user", "content": "Hello!"}\n    ]\n  }\''
+            }
+        };
+
+        var langTabs = document.getElementById('langTabs');
+        var codeBlock = document.getElementById('codeBlock');
+        var codeLangLabel = document.getElementById('codeLangLabel');
+
+        langTabs.addEventListener('click', function(e) {
+            var btn = e.target.closest('button');
+            if (!btn || !btn.dataset.lang) return;
+            langTabs.querySelectorAll('button').forEach(function(b) { b.classList.remove('active'); });
+            btn.classList.add('active');
+            var lang = btn.dataset.lang;
+            var snippet = codeSnippets[lang];
+            if (snippet) {
+                codeLangLabel.textContent = snippet.label;
+                codeBlock.textContent = snippet.code;
+            }
+        });
+
+        function copyText(text, btn) {
+            navigator.clipboard.writeText(text).then(function() {
+                var orig = btn.innerHTML;
+                btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Copied';
+                setTimeout(function() { btn.innerHTML = orig; }, 2000);
+            });
         }
 
-        function renderMessages() {
-            const html = messages.map(m => `<div class="message ${m.role}"><div class="message-content">${escapeHtml(m.content)}</div></div>`).join('');
-            messagesContainer.innerHTML = html;
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        }
+        document.getElementById('copyCodeBtn').addEventListener('click', function() {
+            var activeLang = langTabs.querySelector('.active');
+            var snippet = codeSnippets[activeLang?.dataset?.lang || 'python'];
+            copyText(snippet?.code || codeBlock.textContent, this);
+        });
 
-        function showError(message) {
-            errorContainer.innerHTML = `<div class="error">⚠️ ${escapeHtml(message)}</div>`;
-            setTimeout(() => errorContainer.innerHTML = '', 5000);
-        }
+        document.getElementById('cloneCopyBtn').addEventListener('click', function() {
+            copyText('git clone https://github.com/dannysimfukwe/ai-server-docker.git', this);
+        });
 
-        function escapeHtml(text) { const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
-
-        sendBtn.addEventListener('click', sendMessage);
-        messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
-
-        fetch(`${API_BASE}/health`, { headers: { 'Authorization': `Bearer ${getApiKey()}` } })
-            .then(r => { if (r.ok) modelNameEl.textContent = 'Model: Llama 3.2 (1B)'; })
-            .catch(() => { modelNameEl.textContent = 'Model: Unable to connect'; });
+        fetch(API_BASE + '/health')
+            .then(function(r) {
+                if (r.ok) modelNameEl.textContent = 'Model: Llama 3.2 (1B)';
+                else modelNameEl.textContent = 'Model: Connected';
+            })
+            .catch(function() {
+                modelNameEl.textContent = 'Model: Ready';
+            });
     </script>
 </body>
 </html>
