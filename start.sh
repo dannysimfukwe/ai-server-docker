@@ -16,7 +16,6 @@ mkdir -p /app /data /run/nginx /var/log/nginx
 
 # Inject API_KEY into nginx.conf and index.html
 sed -i "s|__API_KEY__|$API_KEY|g" /etc/nginx/nginx.conf
-sed -i "s|__API_KEY__|$API_KEY|g" /app/index.html
 
 echo "Starting Ollama..."
 ollama serve &

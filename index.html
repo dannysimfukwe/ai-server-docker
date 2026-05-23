@@ -491,19 +491,6 @@
             </div>
 
             <div class="docs-card">
-                <h3><span class="icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                </span>Your API Key</h3>
-                <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.06);border-radius:8px;font-family:'SF Mono','Fira Code','Cascadia Code',monospace;font-size:12px;">
-                    <span id="displayApiKey" style="color:#f97316;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">__API_KEY__</span>
-                    <button class="copy-btn" id="apiKeyCopyBtn" style="background:none;border:none;color:#6b7280;cursor:pointer;padding:4px;border-radius:4px;flex-shrink:0;">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                    </button>
-                </div>
-                <p style="margin-top:8px;font-size:11px;color:#4b5563;">This key is auto-generated and unique to this deployment.</p>
-            </div>
-
-            <div class="docs-card">
                 <div class="lang-tabs" id="langTabs">
                     <button class="active" data-lang="python">Python</button>
                     <button data-lang="javascript">JavaScript</button>
@@ -569,7 +556,7 @@ print(response.choices[0].message.content)</pre>
                     </div>
                     <div class="env-item">
                         <span class="key">API_KEY</span>
-                        <span class="val" id="envApiKey">Auto-generated at startup</span>
+                        <span class="val">Set via platform env vars</span>
                     </div>
                 </div>
             </div>
@@ -607,17 +594,7 @@ print(response.choices[0].message.content)</pre>
 
         apiEndpointEl.textContent = API_BASE + '/v1/chat/completions';
 
-        var deployedApiKey = '__API_KEY__';
-        if (deployedApiKey && deployedApiKey.indexOf('API_KEY') === -1) {
-            document.getElementById('displayApiKey').textContent = deployedApiKey;
-            document.getElementById('envApiKey').textContent = deployedApiKey;
-        }
-
-        if (deployedApiKey && deployedApiKey.indexOf('API_KEY') === -1) {
-            apiKeyInput.value = deployedApiKey;
-            localStorage.setItem('ai_api_key', deployedApiKey);
-            keyOk.style.display = 'inline';
-        } else if (localStorage.getItem('ai_api_key')) {
+        if (localStorage.getItem('ai_api_key')) {
             apiKeyInput.value = localStorage.getItem('ai_api_key');
             keyOk.style.display = 'inline';
         }
@@ -729,7 +706,7 @@ print(response.choices[0].message.content)</pre>
         });
 
         var codeSnippets = {};
-        var _apiKey = deployedApiKey && deployedApiKey.indexOf('API_KEY') === -1 ? deployedApiKey : 'your-api-key';
+        var _apiKey = 'your-api-key';
         codeSnippets.python = {
             label: 'Python',
             code: 'from openai import OpenAI\n\nclient = OpenAI(\n    base_url="' + API_BASE + '/v1",\n    api_key="' + _apiKey + '"\n)\n\nresponse = client.chat.completions.create(\n    model="llama3.2",\n    messages=[\n        {"role": "user", "content": "Hello!"}\n    ]\n)\n\nprint(response.choices[0].message.content)'
@@ -776,10 +753,6 @@ print(response.choices[0].message.content)</pre>
 
         document.getElementById('cloneCopyBtn').addEventListener('click', function() {
             copyText('git clone https://github.com/dannysimfukwe/ai-server-docker.git', this);
-        });
-
-        document.getElementById('apiKeyCopyBtn').addEventListener('click', function() {
-            copyText(document.getElementById('displayApiKey').textContent, this);
         });
 
         fetch(API_BASE + '/health')
