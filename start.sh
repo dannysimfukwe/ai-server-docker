@@ -2,8 +2,13 @@
 
 set -e
 
-API_KEY="${API_KEY:-$(openssl rand -hex 32)}"
+API_KEY="${API_KEY:-auto-generated}"
 MODEL_NAME="${MODEL_NAME:-llama3.2:1b}"
+
+# Generate a real API key if still using the placeholder
+if [ "$API_KEY" = "auto-generated" ]; then
+    API_KEY="$(openssl rand -hex 32)"
+fi
 
 echo "=============================================="
 echo "         AI Server Configuration"
