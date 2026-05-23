@@ -42,3 +42,8 @@ environment:
       - "1024": 1024
       - "2048": 2048
     default: "1024"
+  - key: API_KEY
+    label: API Key
+    type: string
+    default: auto-generated
+    description: Auto-generated on first deploy. Keep secret.
