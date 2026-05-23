@@ -1,6 +1,7 @@
 FROM ollama/ollama:latest
 
 ENV DEBIAN_FRONTEND=noninteractive
+ENV API_KEY=""
 
 RUN apt-get update && apt-get install -y \
     curl \
